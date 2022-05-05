@@ -1,0 +1,18 @@
+Screen login:
+    cần check email xem có phải email hợp lệ hay không
+    chưa direct tới page forgot password
+
+Screen register:  
+    phía BE cần có xác thực email bằng cách gửi code hoặc send link để xác thực email này hợp lệ 
+    và đúng của user 
+
+Name:
+    ràng buộc đang bị lỗi, chỉ cho phép nhập 1 từ nhưng placehoder lại Nguyen Van A?
+
+Password khi tạo cần phải có comfirm password
+
+Đối với số điện thoại: nếu có thể thì nên list các đầu số của các nước trên toàn thế giới
+và send code về tin nhắn của điện thoại người dùng
+
+sau khi đăng kí xong, 
+nên thông báo cho người dùng biết là đăng kí tài khoản có hợp lệ hay không
