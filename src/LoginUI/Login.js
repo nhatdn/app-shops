@@ -7,7 +7,7 @@ import {
   Button,
   Alert,
 } from "react-native";
-import React, { useState } from "react";
+import React, { useState, useLayoutEffect } from "react";
 import AntIcon from "react-native-vector-icons/AntDesign";
 import TextInput from "./components/TextInput";
 import { LoginButton, AccessToken } from "react-native-fbsdk-next";
@@ -32,7 +32,44 @@ export default function LoginUI({ navigation, setIsSignIn }) {
   const [id, setId] = useState("");
   const [password, setPassword] = useState("");
   const [err, setErr] = useState(null);
+  const [isLogin, setLogin] = useState(true);
 
+  useLayoutEffect(() => {
+    (async () => {
+      let account = await AsyncStorage.getItem("account");
+      account = JSON.parse(account);
+      if (account != null) {
+        fetch("http://svcy3.myclass.vn/api/Users/signin", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email: account.email,
+            password: account.password,
+          }),
+        })
+          .then((response) => response.json())
+          .then(async (data) => {
+            if (data.statusCode === 200) {
+              await AsyncStorage.setItem(
+                "accessToken",
+                data.content.accessToken
+              );
+              setIsSignIn(false);
+              navigation.navigate(stackName.homeStack, "HomeScreen");
+            } else {
+              setLogin(false);
+            }
+          })
+          .catch((e) => {
+            console.log(e);
+          });
+      } else {
+        setLogin(false);
+      }
+    })();
+  }, []);
   const login = () => {
     fetch("http://svcy3.myclass.vn/api/Users/signin", {
       method: "POST",
@@ -45,6 +82,11 @@ export default function LoginUI({ navigation, setIsSignIn }) {
       .then(async (data) => {
         if (data.statusCode === 200) {
           await AsyncStorage.setItem("accessToken", data.content.accessToken);
+          const account = {
+            email,
+            password,
+          };
+          await AsyncStorage.setItem("account", JSON.stringify(account));
           setIsSignIn(false);
           navigation.navigate(stackName.homeStack, "HomeScreen");
         } else {
@@ -59,43 +101,49 @@ export default function LoginUI({ navigation, setIsSignIn }) {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <AntIcon name="lock" size={80} style={{ color: "#26c6da" }} />
-        <Text style={styles.textHeader}> Welcome to AP!</Text>
-      </View>
+      {isLogin ? (
+        <View>
+          <Text style={styles.textHeader}> Waiting me</Text>
+        </View>
+      ) : (
+        <View>
+          <View style={styles.header}>
+            <AntIcon name="lock" size={80} style={{ color: "#26c6da" }} />
+            <Text style={styles.textHeader}> Welcome to AP!</Text>
+          </View>
 
-      <View style={styles.loginForm}>
-        <TextInput
-          title="Email"
-          placeholder="mail@example.com"
-          value={email}
-          onChangeText={hanldePressEmail}
-          autoCapitalize="none"
-        />
-        <TextInput
-          title="Password"
-          placeholder="********"
-          secureTextEntry
-          password
-          value={password}
-          onChangeText={hanldePressPassword}
-          autoCapitalize="none"
-        />
-      </View>
+          <View style={styles.loginForm}>
+            <TextInput
+              title="Email"
+              placeholder="mail@example.com"
+              value={email}
+              onChangeText={hanldePressEmail}
+              autoCapitalize="none"
+            />
+            <TextInput
+              title="Password"
+              placeholder="********"
+              secureTextEntry
+              password
+              value={password}
+              onChangeText={hanldePressPassword}
+              autoCapitalize="none"
+            />
+          </View>
 
-      <TouchableOpacity style={styles.btnLogin} onPress={() => login()}>
-        <Text style={styles.btnLoginText}> Log In</Text>
-      </TouchableOpacity>
+          <TouchableOpacity style={styles.btnLogin} onPress={() => login()}>
+            <Text style={styles.btnLoginText}> Log In</Text>
+          </TouchableOpacity>
 
-      <View
-        style={{
-          justifyContent: "center",
-          alignItems: "center",
-          marginVertical: 10,
-          backgroundColor: "red",
-        }}
-      >
-        {/* <LoginButton
+          <View
+            style={{
+              justifyContent: "center",
+              alignItems: "center",
+              marginVertical: 10,
+              backgroundColor: "red",
+            }}
+          >
+            {/* <LoginButton
           onLoginFinished={(error, result) => {
             if (error) {
               console.log("login has error: " + result.error);
@@ -109,27 +157,31 @@ export default function LoginUI({ navigation, setIsSignIn }) {
           }}
           onLogoutFinished={() => console.log("logout.")}
         /> */}
-      </View>
-      <TouchableOpacity
-        style={{ alignItems: "center", justifyContent: "center" }}
-      >
-        <Text style={{ color: "#006978", fontSize: 20, alignSelf: "center" }}>
-          {" "}
-          Forgot Password?
-        </Text>
-      </TouchableOpacity>
-
-      <View style={styles.footer}>
-        <Text style={styles.textFooter}> Don't you have an account?</Text>
-        <TouchableOpacity style={styles.textFooter}>
-          <Text
-            style={styles.register}
-            onPress={() => navigate(stackName.signupStack)}
+          </View>
+          <TouchableOpacity
+            style={{ alignItems: "center", justifyContent: "center" }}
           >
-            Register
-          </Text>
-        </TouchableOpacity>
-      </View>
+            <Text
+              style={{ color: "#006978", fontSize: 20, alignSelf: "center" }}
+            >
+              {" "}
+              Forgot Password?
+            </Text>
+          </TouchableOpacity>
+
+          <View style={styles.footer}>
+            <Text style={styles.textFooter}> Don't you have an account?</Text>
+            <TouchableOpacity style={styles.textFooter}>
+              <Text
+                style={styles.register}
+                onPress={() => navigate(stackName.signupStack)}
+              >
+                Register
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
     </View>
   );
 }
@@ -174,6 +226,7 @@ const styles = StyleSheet.create({
     color: "#ffffff",
     fontWeight: "bold",
     fontSize: 20,
+    width: "100%",
   },
   footer: {
     flex: 3,
