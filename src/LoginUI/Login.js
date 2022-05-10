@@ -4,48 +4,53 @@ import {
   StyleSheet,
   TextInput as RNTextInput,
   TouchableOpacity,
+  Button,
+  Alert,
 } from "react-native";
-import React from "react";
+import React, { useState } from "react";
 import AntIcon from "react-native-vector-icons/AntDesign";
 import TextInput from "./components/TextInput";
-import { useState } from "react";
+import { LoginButton, AccessToken } from "react-native-fbsdk-next";
 import { navigate } from "../navigation/NavigationWithoutProp";
+import HomeScreen from "../screens/HomeScreen";
+import { NavigationContainer } from "@react-navigation/native";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { stackName } from "../configs/navigationConstants";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-export default function LoginUI({ navigation, setIsSigIn }) {
+export default function LoginUI({ navigation, setIsSignIn }) {
+  const hanldePressEmail = (email) => {
+    setEmail(email);
+    setErr(null);
+  };
+  const hanldePressPassword = (password) => {
+    setPassword(password);
+    setErr(null);
+  };
+
   const [email, setEmail] = useState("");
   const [id, setId] = useState("");
   const [password, setPassword] = useState("");
   const [err, setErr] = useState(null);
 
-  const handlePressEmail = (email) => {
-    setEmail(email);
-    setErr(null);
-  };
-  const handlePressPassword = (password) => {
-    setPassword(password);
-    setErr(null);
-  };
-
-  const handleLogin = () => {
+  const login = () => {
     fetch("http://svcy3.myclass.vn/api/Users/signin", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email: email, password: password }),
     })
       .then((response) => response.json())
       .then(async (data) => {
-        if (data.statusCode == 200) {
+        if (data.statusCode === 200) {
           await AsyncStorage.setItem("accessToken", data.content.accessToken);
-          setIsSigIn(false);
+          setIsSignIn(false);
           navigation.navigate(stackName.homeStack, "HomeScreen");
         } else {
-          setErr(data?.message);
+          setErr(data.message);
+          Alert.alert("Email or Password is wrong. Please try again.");
         }
-        console.log("Success:", data);
       })
       .catch((e) => {
         console.log(e);
@@ -55,29 +60,56 @@ export default function LoginUI({ navigation, setIsSigIn }) {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        {/* <AntIcon name="lock" size={80} style={{ color: "#26c6da" }} /> */}
+        <AntIcon name="lock" size={80} style={{ color: "#26c6da" }} />
         <Text style={styles.textHeader}> Welcome to AP!</Text>
       </View>
-      <View>{err && <Text>{err}</Text>}</View>
+
       <View style={styles.loginForm}>
         <TextInput
           title="Email"
-          // value="pp@gmail.com"
           placeholder="mail@example.com"
-          onChangeText={handlePressEmail}
+          value={email}
+          onChangeText={hanldePressEmail}
+          autoCapitalize="none"
         />
         <TextInput
           title="Password"
-          // value="123456"
           placeholder="********"
           secureTextEntry
-          onChangeText={handlePressPassword}
+          password
+          value={password}
+          onChangeText={hanldePressPassword}
+          autoCapitalize="none"
         />
       </View>
 
-      <TouchableOpacity style={styles.btnLogin} onPress={handleLogin}>
+      <TouchableOpacity style={styles.btnLogin} onPress={() => login()}>
         <Text style={styles.btnLoginText}> Log In</Text>
       </TouchableOpacity>
+
+      <View
+        style={{
+          justifyContent: "center",
+          alignItems: "center",
+          marginVertical: 10,
+          backgroundColor: "red",
+        }}
+      >
+        {/* <LoginButton
+          onLoginFinished={(error, result) => {
+            if (error) {
+              console.log("login has error: " + result.error);
+            } else if (result.isCancelled) {
+              console.log("login is cancelled.");
+            } else {
+              AccessToken.getCurrentAccessToken().then((data) => {
+                console.log(data.accessToken.toString());
+              });
+            }
+          }}
+          onLogoutFinished={() => console.log("logout.")}
+        /> */}
+      </View>
       <TouchableOpacity
         style={{ alignItems: "center", justifyContent: "center" }}
       >
@@ -118,10 +150,14 @@ const styles = StyleSheet.create({
     fontSize: 25,
     paddingTop: 20,
     color: "#006978",
+    fontStyle: "italic",
     fontWeight: "bold",
   },
   loginForm: {
     flex: 2,
+    // backgroundColor: 'red',
+    // alignContent:'space-between',
+    // justifyContent:'center',
   },
   btnLogin: {
     alignItems: "center",

@@ -23,12 +23,12 @@ export default class Like extends Component {
         <TouchableOpacity onPress={this.selectLike}>
   {this.state.liked ?
       <View>
-         {/* <AntDesign name='like1' size={35} style={{color:COLORS.teal}} /> */}
+         <AntDesign name='like1' size={35} style={{color:COLORS.teal}} />
           <Text style={{fontSize:15}} > {this.state.like} </Text>
            </View>
             :
       <View>
-          {/* <AntDesign name='like2' size={35} style={{color:COLORS.teal}} /> */}
+          <AntDesign name='like2' size={35} style={{color:COLORS.teal}} />
           <Text style={{fontSize:15}} > {this.state.like} </Text> 
           </View>
   }

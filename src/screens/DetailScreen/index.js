@@ -6,7 +6,6 @@ import {
   StatusBar,
   Image,
   TextInput,
-  Button,
   ScrollView,
 } from "react-native";
 import React, { useEffect, useState } from "react";
@@ -17,32 +16,24 @@ import COLORS from "../../themes";
 import { stackName } from "../../configs/navigationConstants";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Like from "./Like";
+import LikeHook from "./LikeHook";
+import Stores from "./Stores";
 
 export default function DetailScreen({ navigation, route }) {
   const [data, setData] = useState([]);
-  const [id, setId] = useState(0);
+  const [id, setId] = useState("");
   const [bgColor, setBgColor] = useState(null);
-  const [productId, setProductId] = useState(route.params.id);
-  const [quantity, setQuantity] = useState(0);
+  // const [productId, setProductId]= useState('')
+  const [quantity, setQuantity] = useState("");
   const [like, setLike] = useState("");
+
   useEffect(() => {
     loadOneProduct();
-    (async () => {
-      const accessToken = await AsyncStorage.getItem("accessToken");
-      console.log(accessToken);
-      await fetch("http://svcy3.myclass.vn/api/Users/getProfile", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: "Bearer " + accessToken,
-        },
-      })
-        .then((res) => res.json())
-        .then(console.log);
-    })();
   }, []);
-  const loadOneProduct = async () => {
+
+  const loadOneProduct = async (id) => {
     try {
+      //success => save response to store
       const response = await fetch(
         `http://svcy3.myclass.vn/api/Product/getbyid?id=${route.params.id}`,
         {
@@ -50,7 +41,6 @@ export default function DetailScreen({ navigation, route }) {
         }
       );
       const data = await response.json();
-      // console.log(data);
       setData(data);
     } catch (error) {
       console.log("error");
@@ -58,7 +48,6 @@ export default function DetailScreen({ navigation, route }) {
   };
 
   const obj = data.content;
-  // console.log(obj);
 
   const relatedProducts = () => {
     return obj.relatedProducts.map((item, index) => {
@@ -83,9 +72,8 @@ export default function DetailScreen({ navigation, route }) {
       );
     });
   };
-  const loadCart = () => {
-    console.log("you like it");
-  };
+  const productId = route.params.id;
+
   const onPressAddToCart = async () => {
     var oldData = await AsyncStorage.getItem("orderDetail");
     oldData = JSON.parse(oldData);
@@ -120,14 +108,13 @@ export default function DetailScreen({ navigation, route }) {
     console.log(temp);
     console.log("=============End===================");
   };
-
   const handleQuantity = (value) => {
     setQuantity(value);
   };
 
   const shoeDetail = () => {
     const backgroundColor = COLORS.teal;
-    // console.log(backgroundColor);
+
     return (
       <View style={styles.container}>
         <Text style={{ fontSize: 20, fontWeight: "bold", color: COLORS.grey }}>
@@ -149,7 +136,8 @@ export default function DetailScreen({ navigation, route }) {
           >
             $ {obj.price}
           </Text>
-          <Like />
+          {/* <Like /> */}
+          <LikeHook />
         </View>
         <View
           style={{ flexDirection: "row", position: "relative", bottom: 20 }}
@@ -227,6 +215,7 @@ export default function DetailScreen({ navigation, route }) {
         >
           {data && relatedProducts()}
         </ScrollView>
+        {/* <Stores /> */}
       </View>
     );
   };
@@ -242,12 +231,10 @@ export default function DetailScreen({ navigation, route }) {
         }}
       >
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          {/* <AntDesign name="close" size={30} /> */}
-          <Text>Close</Text>
+          <AntDesign name="close" size={30} />
         </TouchableOpacity>
         <TouchableOpacity onPress={() => navigate(stackName.cartOrderStack)}>
-          {/* <AntDesign name="shoppingcart" size={30} /> */}
-          <Text>Cart</Text>
+          <AntDesign name="shoppingcart" size={30} />
         </TouchableOpacity>
       </View>
       <View style={{ flex: 8 }}>
@@ -274,8 +261,7 @@ export default function DetailScreen({ navigation, route }) {
             borderRadius: 50,
           }}
         >
-          <Button title="Heart" onPress={() => loadCart()}></Button>
-          {/* <AntDesign name="hearto" size={30} onPress={() => loadCart()} /> */}
+          <AntDesign name="hearto" size={30} onPress={() => loadCart()} />
         </TouchableOpacity>
 
         <TouchableOpacity
