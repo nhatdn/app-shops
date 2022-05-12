@@ -20,10 +20,9 @@ import LikeHook from "./LikeHook";
 import Stores from "./Stores";
 
 export default function DetailScreen({ navigation, route }) {
-  const [data, setData] = useState([]);
+  const [data, setData] = useState(null);
   const [id, setId] = useState("");
   const [bgColor, setBgColor] = useState(null);
-  // const [productId, setProductId]= useState('')
   const [quantity, setQuantity] = useState("");
   const [like, setLike] = useState("");
 
@@ -33,7 +32,6 @@ export default function DetailScreen({ navigation, route }) {
 
   const loadOneProduct = async (id) => {
     try {
-      //success => save response to store
       const response = await fetch(
         `http://svcy3.myclass.vn/api/Product/getbyid?id=${route.params.id}`,
         {
@@ -41,36 +39,41 @@ export default function DetailScreen({ navigation, route }) {
         }
       );
       const data = await response.json();
-      setData(data);
+      console.log(data.content);
+      setData(data.content);
     } catch (error) {
       console.log("error");
     }
   };
 
-  const obj = data.content;
-
   const relatedProducts = () => {
-    return obj.relatedProducts.map((item, index) => {
-      return (
-        <View key={index} style={{ marginRight: 15 }}>
-          <TouchableOpacity>
-            <Image
-              source={{ uri: item.image }}
-              style={{ height: 150, width: 160 }}
-            />
-          </TouchableOpacity>
-          <View style={{ width: 160 }}>
-            <Text style={{ fontWeight: "bold", color: COLORS.grey }}>
-              {item.name}
-            </Text>
-            <Text style={{ fontWeight: "bold", color: COLORS.darkgray }}>
-              $ {item.price}
-            </Text>
-            <Text style={{ color: COLORS.grey }}>{item.shortDescription}</Text>
+    if (data?.relatedProducts) {
+      return data.relatedProducts.map((item, index) => {
+        return (
+          <View key={index} style={{ marginRight: 15 }}>
+            <TouchableOpacity>
+              <Image
+                source={{ uri: item.image }}
+                style={{ height: 150, width: 160 }}
+              />
+            </TouchableOpacity>
+            <View style={{ width: 160 }}>
+              <Text style={{ fontWeight: "bold", color: COLORS.grey }}>
+                {item.name}
+              </Text>
+              <Text style={{ fontWeight: "bold", color: COLORS.darkgray }}>
+                $ {item.price}
+              </Text>
+              <Text style={{ color: COLORS.grey }}>
+                {item.shortDescription}
+              </Text>
+            </View>
           </View>
-        </View>
-      );
-    });
+        );
+      });
+    } else {
+      return null;
+    }
   };
   const productId = route.params.id;
 
@@ -85,6 +88,8 @@ export default function DetailScreen({ navigation, route }) {
           return {
             productId,
             quantity,
+            name: data.name,
+            price: data.price,
           };
         }
         return item;
@@ -92,7 +97,10 @@ export default function DetailScreen({ navigation, route }) {
       if (checking) {
         await AsyncStorage.setItem(
           "orderDetail",
-          JSON.stringify([...oldData, { productId, quantity }])
+          JSON.stringify([
+            ...oldData,
+            { productId, quantity, name: data.name, price: data.price },
+          ])
         );
       } else {
         await AsyncStorage.setItem("orderDetail", JSON.stringify([...oldData]));
@@ -100,7 +108,14 @@ export default function DetailScreen({ navigation, route }) {
     } else {
       await AsyncStorage.setItem(
         "orderDetail",
-        JSON.stringify([{ productId: route.params.id, quantity }])
+        JSON.stringify([
+          {
+            productId: route.params.id,
+            quantity,
+            name: data.name,
+            price: data.price,
+          },
+        ])
       );
     }
     var temp = await AsyncStorage.getItem("orderDetail");
@@ -118,11 +133,11 @@ export default function DetailScreen({ navigation, route }) {
     return (
       <View style={styles.container}>
         <Text style={{ fontSize: 20, fontWeight: "bold", color: COLORS.grey }}>
-          {obj.name}
+          {data?.name}
         </Text>
         <View style={{ justifyContent: "center", alignItems: "center" }}>
           <Image
-            source={{ uri: obj.image }}
+            source={{ uri: data?.image }}
             style={{ height: 230, width: 250 }}
           />
           <Text
@@ -134,7 +149,7 @@ export default function DetailScreen({ navigation, route }) {
               left: 100,
             }}
           >
-            $ {obj.price}
+            $ {data?.price}
           </Text>
           {/* <Like /> */}
           <LikeHook />
@@ -173,19 +188,25 @@ export default function DetailScreen({ navigation, route }) {
             marginRight: 10,
           }}
         >
-          {obj.size.map((i, index) => {
-            return (
-              <Text
-                key={index}
-                style={{ fontSize: 20, fontWeight: "bold", color: COLORS.grey }}
-                onPress={() => {
-                  backgroundColor;
-                }}
-              >
-                {i}
-              </Text>
-            );
-          })}
+          {data?.size
+            ? data?.size.map((i, index) => {
+                return (
+                  <Text
+                    key={index}
+                    style={{
+                      fontSize: 20,
+                      fontWeight: "bold",
+                      color: COLORS.grey,
+                    }}
+                    onPress={() => {
+                      backgroundColor;
+                    }}
+                  >
+                    {i}
+                  </Text>
+                );
+              })
+            : null}
         </View>
         <View style={{ fontSize: 20, fontWeight: "bold" }}>
           <Text
@@ -199,7 +220,7 @@ export default function DetailScreen({ navigation, route }) {
             Description:
           </Text>
           <Text style={{ fontSize: 15, color: COLORS.darkgray }}>
-            {obj.description}
+            {data?.description}
           </Text>
         </View>
 
@@ -239,7 +260,7 @@ export default function DetailScreen({ navigation, route }) {
       </View>
       <View style={{ flex: 8 }}>
         <ScrollView horizontal={false} key={id}>
-          {obj && shoeDetail()}
+          {data && shoeDetail()}
         </ScrollView>
       </View>
       <View
@@ -285,6 +306,7 @@ export default function DetailScreen({ navigation, route }) {
     </View>
   );
 }
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
